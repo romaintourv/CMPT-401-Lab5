@@ -28,16 +28,6 @@
     <h1>Lab Assignment #5: Joystick, 74HC595 & LED Bar Graph, 7-Segment Display, and LED Matrix<br>
         2023-10-18</h1>
 
-    <h2>Lab 16.3</h2>
-    <h3>Breadboard Settings</h3>
-    <img src="Lab16_3.jpg" width="1000" height="708">
-
-    <h3>Video</h3>
-    <video controls autoplay>
-        <source src="Lab16_3.mov" type="video/mp4">
-    </video>
-
-
     <h2>Project #1</h2>
 
     <h3>Description of what the lab assignment is about</h3>
@@ -49,9 +39,10 @@
     <h3>List of Hardware Compnents</h3>
 
     <ul>
-        <li>7 x LED's (red))</li>
-        <li>18 x wires</li>
-        <li>7 x 220-ohm resistor</li>
+        <li>1 x 4 digit 7 segment LED display</li>
+        <li>20+ x wires</li>
+        <li>1 x Joystick</li>
+        <li>8 x 220-ohm resistor</li>
         <li>1 x Passive Buzzer</li>
         <li>1 x NPN Transistor</li>
         <li>1 x 1k-ohm resistor</li>
@@ -73,239 +64,92 @@
 
     <h3>Source Code</h3>
     <p class="code">
-        from machine import TouchPad, Pin, PWM<br>
         import time<br>
+        from my74HC595 import Chip74HC595<br>
+        from machine import Pin, ADC<br>
         <br>
-        passiveBuzzer=PWM(Pin(5),2000)<br>
+        comPin=[25,26,27,14];<br>
+        <span class="tab"></span># num =[0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8,<br>
+        <span class="tab"></span># 0x80, 0x90, 0x88, 0x83, 0xc6, 0xa1, 0x86, 0x8e]<br>
         <br>
+        num = [0x83, 0x86, 0x86, 0x8e]<br>
+        step1L = [0x86, 0x86, 0x8e, 0x83]<br>
+        step2L = [0x86, 0x8e, 0x83, 0x86]<br>
+        step3L = [0x8e, 0x83, 0x86, 0x86]<br>
         <br>
-        doLed = Pin(26,Pin.OUT)<br>
-        reLed = Pin(18,Pin.OUT)<br>
-        miLed = Pin(25,Pin.OUT)<br>
-        faLed = Pin(19,Pin.OUT)<br>
-        solLed = Pin(21,Pin.OUT)<br>
-        laLed = Pin(2,Pin.OUT)<br>
-        siLed = Pin(27,Pin.OUT)<br>
+        toTheLeft = [num, step1L, step2L, step3L]<br>
+        toTheRight = [num, step3L, step2L, step1L]<br>
         <br>
-        doLed.value(0)<br>
-        reLed.value(0)<br>
-        miLed.value(0)<br>
-        faLed.value(0)<br>
-        solLed.value(0)<br>
-        laLed.value(0)<br>
-        siLed.value(0)<br>
+        xVal=ADC(Pin(36))<br>
+        yVal=ADC(Pin(39))<br>
+        zVal=Pin(13,Pin.IN,Pin.PULL_UP)<br>
         <br>
+        xVal.atten(ADC.ATTN_11DB)<br>
+        yVal.atten(ADC.ATTN_11DB)<br>
+        xVal.width(ADC.WIDTH_12BIT)<br>
+        yVal.width(ADC.WIDTH_12BIT)<br>
         <br>
-        Do = 1047<br>
-        Re = 1175<br>
-        Mi = 1319<br>
-        Fa = 1397<br>
-        Sol = 1568<br>
-        La = 1760<br>
-        Si = 1976<br>
+        def led_display():<br>
+        <span class="tab"></span>for i in range(0,4):<br>
+        <span class="tab"></span><span class="tab"></span>chns=Pin(comPin[i],Pin.OUT)<br>
+        <span class="tab"></span><span class="tab"></span>chip.shiftOut(0,num[i])<br>
+        <span class="tab"></span><span class="tab"></span>chns.value(1)<br>
+        <span class="tab"></span><span class="tab"></span>time.sleep_ms(1)<br>
+        <span class="tab"></span><span class="tab"></span>chns.value(0)<br>
         <br>
-        def playNote(songNote, led):<br>
-        <span class="tab"></span>passiveBuzzer.init()<br>
-        <span class="tab"></span>passiveBuzzer.freq(songNote)<br>
-        <span class="tab"></span>led.value(1)<br>
-        <span class="tab"></span>time.sleep_ms(1000)<br>
-        <span class="tab"></span>passiveBuzzer.freq(10)<br>
-        <span class="tab"></span>led.value(0)<br>
-        <span class="tab"></span>passiveBuzzer.deinit()<br>
+        def move_left():<br>
+        <span class="tab"></span>for j in range(len(toTheLeft)):<br>
+        <span class="tab"></span><span class="tab"></span>for k in range(100):<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span>for i in range(0,4):<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>chns=Pin(comPin[i],Pin.OUT)<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>chip.shiftOut(0,toTheLeft[j][i])<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>chns.value(1)<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>time.sleep_ms(1)<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>chns.value(0)<br>
         <br>
-        PRESS_VAL=90 #Set a threshold to judge touch<br>
-        RELEASE_VAL=200 #Set a threshold to judge release<br>
+        def move_right():<br>
+        <span class="tab"></span>for j in range(len(toTheRight)):<br>
+        <span class="tab"></span><span class="tab"></span>for k in range(100):<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span>for i in range(0,4):<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>chns=Pin(comPin[i],Pin.OUT)<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>chip.shiftOut(0,toTheRight[j][i])<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>chns.value(1)<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>time.sleep_ms(1)<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+            class="tab"></span>chns.value(0)<br>
         <br>
-        tpDo = TouchPad(Pin(4,Pin.IN,Pin.PULL_UP))<br>
-        tpRe = TouchPad(Pin(32,Pin.IN,Pin.PULL_UP))<br>
-        tpMi = TouchPad(Pin(33,Pin.IN,Pin.PULL_UP))<br>
-        tpFa = TouchPad(Pin(0,Pin.IN,Pin.PULL_UP))<br>
-        tpSol = TouchPad(Pin(15,Pin.IN,Pin.PULL_UP))<br>
-        tpLa = TouchPad(Pin(12,Pin.IN,Pin.PULL_UP))<br>
-        tpSi = TouchPad(Pin(14,Pin.IN,Pin.PULL_UP))<br>
-        <br>
-        DoIsPressed = 0<br>
-        ReIsPressed = 0<br>
-        MiIsPressed = 0<br>
-        FaIsPressed = 0<br>
-        SolIsPressed = 0<br>
-        LaIsPressed = 0<br>
-        SiIsPressed = 0<br>
-        <br>
+        <span class="tab"></span># Pin(15)-74hc595.ds, Pin(2)-74hc595.st_cp, Pin(4)-74hc595.sh_cp<br>
+        chip = Chip74HC595(15,2,4)<br>
         try:<br>
         <span class="tab"></span>while True:<br>
-        <span class="tab"></span> <span class="tab"></span>if tpDo.read() < PRESS_VAL:<br>
-            <span class="tab"></span> <span class="tab"></span> <span class="tab"></span>print("Do Touch detected!")<br>
-            <span class="tab"></span> <span class="tab"></span> <span class="tab"></span>if not DoIsPressed:<br>
-            <span class="tab"></span> <span class="tab"></span> <span class="tab"></span> <span
-                class="tab"></span>DoIsPressed = 1<br>
-            <span class="tab"></span> <span class="tab"></span> <span class="tab"></span> <span
-                class="tab"></span>print("Do Touch detected!")<br>
-            <span class="tab"></span> <span class="tab"></span> <span class="tab"></span> <span
-                class="tab"></span>playNote(Do, doLed)<br>
-            <span class="tab"></span> <span class="tab"></span> <span class="tab"></span> <span
-                class="tab"></span>time.sleep_ms(100)<br>
-            <span class="tab"></span> <span class="tab"></span> <span class="tab"></span> <span
-                class="tab"></span>DoIsPressed = 0<br>
-            <br>
-            <span class="tab"></span><span class="tab"></span>if tpRe.read() < PRESS_VAL:<br>
-                <span class="tab"></span><span class="tab"></span><span class="tab"></span>print("Re Touch
-                detected!")<br>
-                <span class="tab"></span><span class="tab"></span><span class="tab"></span>if not ReIsPressed:<br>
-                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                    class="tab"></span>ReIsPressed = 1<br>
-                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span class="tab"></span>#
-                reverseGPIO()<br>
-                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                    class="tab"></span>print("Re Touch detected!")<br>
-                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                    class="tab"></span>playNote(Re, reLed)<br>
-                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                    class="tab"></span>time.sleep_ms(100)<br>
-                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                    class="tab"></span>ReIsPressed = 0<br>
-                <br>
-                <span class="tab"></span><span class="tab"></span>if tpMi.read() < PRESS_VAL:<br>
-                    <span class="tab"></span><span class="tab"></span><span class="tab"></span>print("Mi Touch
-                    detected!")<br>
-                    <span class="tab"></span><span class="tab"></span><span class="tab"></span>if not MiIsPressed:<br>
-                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                        class="tab"></span>MiIsPressed = 1<br>
-                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                        class="tab"></span># reverseGPIO()<br>
-                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                        class="tab"></span>print("Mi Touch detected!")<br>
-                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                        class="tab"></span>playNote(Mi, miLed)<br>
-                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                        class="tab"></span>time.sleep_ms(100)<br>
-                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                        class="tab"></span>MiIsPressed = 0<br>
-                    # <br>
-                    <span class="tab"></span><span class="tab"></span>if tpFa.read() < PRESS_VAL:<br>
-                        <span class="tab"></span><span class="tab"></span><span class="tab"></span>print("Fa Touch
-                        detected!")<br>
-                        <span class="tab"></span><span class="tab"></span><span class="tab"></span>if not
-                        FaIsPressed:<br>
-                        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                            class="tab"></span>FaIsPressed = 1<br>
-                        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                            class="tab"></span># reverseGPIO()<br>
-                        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                            class="tab"></span>print("Fa Touch detected!")<br>
-                        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                            class="tab"></span>playNote(Fa, faLed)<br>
-                        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                            class="tab"></span>time.sleep_ms(100)<br>
-                        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                            class="tab"></span>FaIsPressed = 0<br>
-                        # <br>
-                        <span class="tab"></span><span class="tab"></span>if tpSol.read() < PRESS_VAL:<br>
-                            <span class="tab"></span><span class="tab"></span><span class="tab"></span>print("Sol Touch
-                            detected!")<br>
-                            <span class="tab"></span><span class="tab"></span><span class="tab"></span>if not
-                            SolIsPressed:<br>
-                            <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                class="tab"></span>SolIsPressed = 1<br>
-                            <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                class="tab"></span># reverseGPIO()<br>
-                            <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                class="tab"></span>print("Sol Touch detected!")<br>
-                            <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                class="tab"></span>playNote(Sol, solLed)<br>
-                            <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                class="tab"></span>time.sleep_ms(100)<br>
-                            <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                class="tab"></span>SolIsPressed = 0<br>
-                            # <br>
-                            <span class="tab"></span><span class="tab"></span>if tpLa.read() < PRESS_VAL:<br>
-                                <span class="tab"></span><span class="tab"></span><span class="tab"></span>print("La
-                                Touch detected!")<br>
-                                <span class="tab"></span><span class="tab"></span><span class="tab"></span>if not
-                                LaIsPressed:<br>
-                                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                    class="tab"></span>LaIsPressed = 1<br>
-                                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                    class="tab"></span>print("La Touch detected!")<br>
-                                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                    class="tab"></span>playNote(La, laLed)<br>
-                                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                    class="tab"></span>time.sleep_ms(100)<br>
-                                <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                    class="tab"></span>LaIsPressed = 0<br>
-                                <br>
-                                <span class="tab"></span><span class="tab"></span>if tpSi.read() < PRESS_VAL:<br>
-                                    <span class="tab"></span><span class="tab"></span><span class="tab"></span>print("Si
-                                    Touch detected!")<br>
-                                    <span class="tab"></span><span class="tab"></span><span class="tab"></span>if not
-                                    SiIsPressed:<br>
-                                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                        class="tab"></span>SiIsPressed = 1<br>
-                                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                        class="tab"></span># reverseGPIO()<br>
-                                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                        class="tab"></span>print("Si Touch detected!")<br>
-                                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                        class="tab"></span>playNote(Si, siLed)<br>
-                                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                        class="tab"></span>SiIsPressed = 0
-                                    <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
-                                        class="tab"></span>time.sleep_ms(100)<br>
-                                    # <br>
-                                    # Releases<br>
-                                    # <br>
-                                    # if tpDo.read() > RELEASE_VAL:<br>
-                                    # print(" Do Touch released!")<br>
-                                    # if DoIsPressed:<br>
-                                    # DoIsPressed = 0<br>
-                                    # print(" Do Touch released!")<br>
-                                    # time.sleep_ms(100)<br>
-                                    # <br>
-                                    # if tpRe.read() > RELEASE_VAL:<br>
-                                    # print(" Re Touch released!")<br>
-                                    # if ReIsPressed:<br>
-                                    # ReIsPressed = 0<br>
-                                    # print(" Re Touch released!")<br>
-                                    # time.sleep_ms(100)<br>
-                                    # <br>
-                                    # if tpMi.read() > RELEASE_VAL:<br>
-                                    # print(" Mi Touch released!")<br>
-                                    # if MiIsPressed:<br>
-                                    # MiIsPressed = 0<br>
-                                    # print(" Mi Touch released!")<br>
-                                    # time.sleep_ms(100) <br>
-                                    # <br>
-                                    # if tpFa.read() > RELEASE_VAL:<br>
-                                    # print(" Fa Touch released!")<br>
-                                    # if FaIsPressed:<br>
-                                    # FaIsPressed = 0<br>
-                                    # print(" Fa Touch released!")<br>
-                                    # time.sleep_ms(100)<br>
-                                    # #<br>
-                                    # if tpSol.read() > RELEASE_VAL:<br>
-                                    # print(" Sol Touch released!")<br>
-                                    # if SolIsPressed:<br>
-                                    # SolIsPressed = 0<br>
-                                    # print(" Sol Touch released!")<br>
-                                    # time.sleep_ms(100)<br>
-                                    # if tpLa.read() > RELEASE_VAL:<br>
-                                    # print(" La Touch released!")<br>
-                                    # if LaIsPressed:<br>
-                                    # LaIsPressed = 0<br>
-                                    # print(" La Touch released!")<br>
-                                    # time.sleep_ms(100)<br>
-                                    # if tpSi.read() > RELEASE_VAL:<br>
-                                    # print(" Si Touch released!")<br>
-                                    # if SiIsPressed:<br>
-                                    # SiIsPressed = 0<br>
-                                    # print(" Si Touch released!")<br>
-                                    # time.sleep_ms(100)<br>
-                                    <span class="tab"></span><span class="tab"></span>else:<br>
-                                    <span class="tab"></span><span class="tab"></span><span
-                                        class="tab"></span>passiveBuzzer.deinit()<br>
-                                    except:<br>
-                                    <span class="tab"></span>print("going except = True")<br>
-                                    <span class="tab"></span>passiveBuzzer.deinit()<br>
+        <span class="tab"></span><span class="tab"></span>if zVal.value() == 0:<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span>print("zVal.value() == 0")<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span>led_display()<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span>while True:<br>
+        <span class="tab"></span><span class="tab"></span><span class="tab"></span><span class="tab"></span>if
+        xVal.read() < 5:<br>
+            <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+                class="tab"></span>move_left()<br>
+            <span class="tab"></span><span class="tab"></span><span class="tab"></span>elif xVal.read() > 4090:<br>
+            <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+                class="tab"></span>move_right()<br>
+            <span class="tab"></span><span class="tab"></span><span class="tab"></span>else:<br>
+            <span class="tab"></span><span class="tab"></span><span class="tab"></span><span
+                class="tab"></span>led_display()<br>
+            <span class="tab"></span>else:<br>
+            <span class="tab"></span><span class="tab"></span>time.sleep_ms(100)<br>
+            except:<br>
+            <span class="tab"></span>pass<br>
+
 
     </p>
 
